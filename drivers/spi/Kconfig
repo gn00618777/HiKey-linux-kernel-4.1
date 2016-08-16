@@ -28,6 +28,19 @@ menuconfig SPI
 
 if SPI
 
+#
+# Miscellaneous I2C chip drivers configuration
+#
+
+config INPUT_CYWSPI
+       tristate "CyWee CWSTM32 Sensor HUB"
+       depends on I2C && INPUT
+       select INPUT_POLLDEV
+       default y
+       help
+         This driver provides support for CWSTM32 Sensor HUB.
+
+
 config SPI_DEBUG
 	bool "Debug support for SPI drivers"
 	depends on DEBUG_KERNEL

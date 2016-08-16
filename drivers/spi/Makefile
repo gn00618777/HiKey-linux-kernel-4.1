@@ -1,7 +1,7 @@
 #
 # Makefile for kernel SPI drivers.
 #
-
+obj-$(CONFIG_INPUT_CYWSPI)		+= CwMcuSensor.o
 ccflags-$(CONFIG_SPI_DEBUG) := -DDEBUG
 
 # small core, mostly translating board-specific

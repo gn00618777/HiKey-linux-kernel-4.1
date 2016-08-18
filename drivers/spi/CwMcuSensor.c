@@ -157,7 +157,7 @@ static int CWMCU_SPI_READ(struct spi_device *spidevice, u8 *data, u8 len)
 	return 0;
 }
 
-/*static int cwstm_parse_dt(struct device *dev, struct CWMCU_T *sensor)
+static int cwstm_parse_dt(struct device *dev, struct CWMCU_T *sensor)
 {
 	struct device_node *np = dev->of_node;
 	int ret = 0;
@@ -173,7 +173,7 @@ static int CWMCU_SPI_READ(struct spi_device *spidevice, u8 *data, u8 len)
 err:
 	return ret;
 	
-}*/
+}
 
 static int CWMCU_SPI_WRITE(struct spi_device *spidevice, u8 *data, u8 len)
 {
@@ -254,6 +254,21 @@ static int create_sysfs_interfaces(struct CWMCU_T *mcu_data)
 	return 0;
 }
 
+static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
+{
+	u8 tx_addr[1]={0};
+	u8 read_buf[64]={0};
+
+	tx_addr[0] = 0x01;
+
+	CWMCU_SPI_WRITE((&mcu)->spi, tx_addr, 1);
+	udelay(100);
+	CWMCU_SPI_READ((&mcu)->spi, read_buf, 64);
+
+	return IRQ_HANDLED;
+
+}
+
 static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 {
 	//struct CWMCU_T mcu;	
@@ -282,14 +297,23 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 	 error = create_sysfs_interfaces(&mcu);
 	 if (error) printk("create sysfs error\n");
 
-	//error = cwstm_parse_dt(&spi->dev,&mcu);
-	//if(error < 0)
-	//{
-	//	printk("failed to parse device tree\n");
+	error = cwstm_parse_dt(&spi->dev,&mcu);
+	if(error < 0)
+	{
+		printk("failed to parse device tree\n");
 		//goto err_parse_dt;
-	//}
+	}
 
-	//gpio_request((&mcu)->irq_gpio, "cwstm,irq-gpio");
+	gpio_request((&mcu)->irq_gpio, "cwstm,irq-gpio");
+
+	(&mcu)->spi->irq = gpio_to_irq((&mcu)->irq_gpio);
+
+	if ((&mcu)->spi->irq > 0)
+	{
+		error = request_threaded_irq((&mcu)->spi->irq, NULL, CWMCU_interrupt_thread, IRQF_TRIGGER_RISING | IRQF_ONESHOT, "cwmcu", &mcu);
+		if (error < 0) printk("request irq %d failed\n", (&mcu)->spi->irq);
+	}
+
 
 	return 0;
 

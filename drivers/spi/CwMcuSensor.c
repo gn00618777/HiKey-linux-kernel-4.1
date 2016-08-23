@@ -19,12 +19,22 @@
 #include <linux/skbuff.h>
 
 #include "CwMcuSensor.h"
+#include "CwMcuSensor_input.h"
 
 // what?
 #define QueueSystemInfoMsgSize		30
 #define QueueWarningMsgSize		30
 
 struct CWMCU_T {
+
+	/* Input device */
+	struct input_dev *input_acc;
+        struct input_dev *input_gyro;
+        struct input_dev *input_mag;
+	struct input_dev *input_fusion;
+
+	struct platform_device *virmouse_dev;
+
 	/* SPI device register */
 	struct spi_device *spi;
 
@@ -129,7 +139,7 @@ struct CWMCU_T {
 	uint16_t voice_data_length;
 	uint8_t voice_stop_streaming;
 
-} mcu;
+};
 
 static int CWMCU_SPI_READ(struct spi_device *spidevice, u8 *data, u8 len)
 {
@@ -209,19 +219,8 @@ static ssize_t active_show(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t active_set(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	u8 data[64]={0};
-        u8 rx_addr[1]={0};
-	int i = 0;
-
-	rx_addr[0] = 0x01;
 	
-	CWMCU_SPI_WRITE((&mcu)->spi,rx_addr, 1);
-	udelay(100);
-	CWMCU_SPI_READ((&mcu)->spi,data, 64);
-
-	for(i=0;i<64;i++)
-		printk("%x ",data[i]);
-	printk("\n");
+	printk("do nothing");
 
 	return count;
 	
@@ -254,31 +253,317 @@ static int create_sysfs_interfaces(struct CWMCU_T *mcu_data)
 	return 0;
 }
 
+static void report_acc_values(u8 *read_buf, struct CWMCU_T *mcu)
+{
+	int reset_value = 0xFFFF0000;
+	int temp = 0, temp_x=0, temp_y=0, temp_z=0;
+
+	temp = (read_buf[8] << 8) | (read_buf[7]);
+	temp = (temp << 8) | ( read_buf[6]);
+	temp = (temp << 8) | ( read_buf[5]);
+	temp_x = temp;
+	temp = 0;
+
+	temp = (read_buf[12] << 8) | (read_buf[11]);
+	temp = (temp << 8) | (read_buf[10]);
+        temp = (temp << 8) | (read_buf[9]);
+	temp_y = temp;
+	temp = 0;
+
+	temp = (read_buf[16] << 8) | (read_buf[15]);
+        temp = (temp << 8) | (read_buf[14]);
+        temp = (temp << 8) | (read_buf[13]);
+        temp_z= temp;
+        temp = 0;
+
+
+	input_report_abs(mcu->input_acc, ABS_X, temp_x);
+	input_report_abs(mcu->input_acc, ABS_Y, temp_y);
+	input_report_abs(mcu->input_acc, ABS_Z, temp_z);
+	input_sync(mcu->input_acc);
+
+	input_report_abs(mcu->input_acc, ABS_X, reset_value);
+	input_report_abs(mcu->input_acc, ABS_Y, reset_value);
+	input_report_abs(mcu->input_acc, ABS_Z, reset_value);
+	input_sync(mcu->input_acc);
+
+}
+
+static void report_gyro_values(u8 *read_buf, struct CWMCU_T *mcu)
+{
+	int reset_value = 0xFFFF0000;
+        int temp = 0, temp_x=0, temp_y=0, temp_z=0;
+
+	temp = (read_buf[20] << 8) | (read_buf[19]);
+        temp = (temp << 8) | ( read_buf[18]);
+        temp = (temp << 8) | ( read_buf[17]);
+        temp_x = temp;
+        temp = 0;
+
+        temp = (read_buf[24] << 8) | (read_buf[23]);
+        temp = (temp << 8) | (read_buf[22]);
+        temp = (temp << 8) | (read_buf[21]);
+        temp_y = temp;
+        temp = 0;
+
+        temp = (read_buf[28] << 8) | (read_buf[27]);
+        temp = (temp << 8) | (read_buf[26]);
+        temp = (temp << 8) | (read_buf[25]);
+        temp_z = temp;
+        temp = 0;
+
+	input_report_abs(mcu->input_gyro, ABS_X, temp_x);
+        input_report_abs(mcu->input_gyro, ABS_Y, temp_y);
+        input_report_abs(mcu->input_gyro, ABS_Z, temp_x);
+        input_sync(mcu->input_gyro);
+
+        input_report_abs(mcu->input_gyro, ABS_X, reset_value);
+        input_report_abs(mcu->input_gyro, ABS_Y, reset_value);
+        input_report_abs(mcu->input_gyro, ABS_Z, reset_value);
+        input_sync(mcu->input_gyro);
+
+}
+
+static void report_fusion_values(u8 *read_buf, struct CWMCU_T *mcu)
+{
+
+	int reset_value = 0xFFFF0000;
+	int temp = 0, temp_x = 0, temp_y = 0, temp_z = 0;
+
+	temp = (read_buf[32] << 8) | (read_buf[31]);
+	temp = (temp << 8) | ( read_buf[30]);
+	temp = (temp << 8) | ( read_buf[29]);
+	temp_x = temp;
+	temp = 0;
+
+	temp = (read_buf[36] << 8) | (read_buf[35]);
+	temp = (temp << 8) | (read_buf[34]);
+	temp = (temp << 8) | (read_buf[33]);
+	temp_y = temp;
+	temp = 0;
+
+	temp = (read_buf[40] << 8) | (read_buf[39]);
+	temp = (temp << 8) | (read_buf[38]);
+	temp = (temp << 8) | (read_buf[37]);
+	temp_z = temp;
+	temp = 0;
+
+	input_report_abs(mcu->input_fusion, ABS_X, temp_x);
+	input_report_abs(mcu->input_fusion, ABS_Y, temp_y);
+	input_report_abs(mcu->input_fusion, ABS_Z, temp_z);
+	input_sync(mcu->input_fusion);
+
+	input_report_abs(mcu->input_fusion, ABS_X, reset_value);
+        input_report_abs(mcu->input_fusion, ABS_Y, reset_value);
+        input_report_abs(mcu->input_fusion, ABS_Z, reset_value);
+        input_sync(mcu->input_fusion);
+
+}
+
+
+
 static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
 {
+	struct CWMCU_T *sensor = data;
 	u8 tx_addr[1]={0};
 	u8 read_buf[64]={0};
+	u8 checksum = 0;
+	int i = 0;
+	tx_addr[0] = 0x03;
 
-	tx_addr[0] = 0x01;
-
-	CWMCU_SPI_WRITE((&mcu)->spi, tx_addr, 1);
+	CWMCU_SPI_WRITE(sensor->spi, tx_addr, 1);
 	udelay(100);
-	CWMCU_SPI_READ((&mcu)->spi, read_buf, 64);
+	CWMCU_SPI_READ(sensor->spi, read_buf, 64);
+
+	// calculate CRC checksum
+	for(i=0; i<63 ; i++)
+		checksum = checksum + read_buf[i];
+
+	if( (checksum == read_buf[63]) && (read_buf[0] == 'C') )
+	{
+		report_acc_values(read_buf, sensor);
+		report_gyro_values(read_buf, sensor);
+		report_fusion_values(read_buf, sensor);
+	}
+
 
 	return IRQ_HANDLED;
 
 }
 
+static int cywee_acc_input_init(struct CWMCU_T *sensor)
+{
+	int err = 0;
+
+	sensor->input_acc = input_allocate_device();
+        if (!sensor->input_acc) {
+                printk(KERN_ERR "Failed to allocate acc input device\n");
+                err = -ENOMEM;
+                goto failed;
+        }
+
+	sensor->input_acc->name = ACC_NAME;
+	sensor->input_acc->dev.parent = &sensor->spi->dev;
+
+	set_bit(EV_ABS, sensor->input_acc->evbit);
+	set_bit(ABS_X, sensor->input_acc->absbit);
+        set_bit(ABS_Y, sensor->input_acc->absbit);
+	set_bit(ABS_Z, sensor->input_acc->absbit);
+
+	input_set_abs_params(sensor->input_acc, ABS_X, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_Y, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_Z, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_RX, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_RY, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_RZ, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_THROTTLE, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_RUDDER, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_WHEEL, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_HAT0X, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_HAT1X, -ACC_MAX, ACC_MAX, 0, 0);
+        input_set_abs_params(sensor->input_acc, ABS_HAT2X, -ACC_MAX, ACC_MAX, 0, 0);
+
+	err = input_register_device(sensor->input_acc);
+        if (err) {
+                pr_err("Failed to register acc input device\n");
+                input_free_device(sensor->input_acc);
+                sensor->input_acc = NULL;
+                goto failed;
+        }
+
+        return 0;
+
+failed:
+	return err;
+}
+
+static int cywee_gyro_input_init(struct CWMCU_T *sensor)
+{
+	int err = 0;
+
+        sensor->input_gyro = input_allocate_device();
+        if (!sensor->input_gyro) {
+                printk(KERN_ERR "Failed to allocate gyro input device\n");
+                err = -ENOMEM;
+                goto failed;
+        }
+
+        sensor->input_gyro->name = GYRO_NAME;
+	sensor->input_gyro->dev.parent = &sensor->spi->dev;
+
+        set_bit(EV_ABS, sensor->input_gyro->evbit);
+        set_bit(ABS_X, sensor->input_gyro->absbit);
+        set_bit(ABS_Y, sensor->input_gyro->absbit);
+        set_bit(ABS_Z, sensor->input_gyro->absbit);
+
+        input_set_abs_params(sensor->input_gyro, ABS_X, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_Y, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_Z, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_RX, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_RY, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_RZ, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_THROTTLE, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_RUDDER, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_WHEEL, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_HAT0X, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_HAT1X, GYRO_MIN, GYRO_MAX, 0, 0);
+        input_set_abs_params(sensor->input_gyro, ABS_HAT2X, GYRO_MIN, GYRO_MAX, 0, 0);
+
+
+        err = input_register_device(sensor->input_gyro);
+        if (err) {
+                pr_err("Failed to register gyro input device\n");
+                input_free_device(sensor->input_gyro);
+                sensor->input_gyro = NULL;
+                goto failed;
+        }
+
+        return 0;
+
+failed:
+        return err;
+
+}
+
+static int cywee_fusion_input_init(struct CWMCU_T *sensor)
+{
+	int err = 0;
+
+	sensor->input_fusion = input_allocate_device();
+        if (!sensor->input_fusion) {
+                printk(KERN_ERR "Failed to allocate fusion2 input device\n");
+                err = -ENOMEM;
+                goto failed;
+        }
+
+	sensor->input_fusion->name = FUSION_RC1_NAME;
+	sensor->input_fusion->dev.parent = &sensor->spi->dev;
+
+	set_bit(EV_ABS, sensor->input_fusion->evbit);
+	set_bit(ABS_X, sensor->input_fusion->absbit);
+        set_bit(ABS_Y, sensor->input_fusion->absbit);
+        set_bit(ABS_Z, sensor->input_fusion->absbit);
+
+	input_set_abs_params(sensor->input_fusion, ABS_X, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_Y, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_Z, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_RX, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_RY, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_RZ, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_THROTTLE, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_RUDDER, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_WHEEL, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT0X, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT1X, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT2X, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT0Y, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT1Y, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT2Y, -4096, 4096, 0, 0);
+
+        input_set_abs_params(sensor->input_fusion, ABS_HAT3X, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_HAT3Y, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_GAS, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_BRAKE, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_PRESSURE, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_DISTANCE, -4096, 4096, 0, 0);
+
+        input_set_abs_params(sensor->input_fusion, ABS_TILT_X, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_TILT_Y, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_TOOL_WIDTH, -4096, 4096, 0, 0);
+
+        input_set_abs_params(sensor->input_fusion, ABS_VOLUME, -4096, 4096, 0, 0);
+        input_set_abs_params(sensor->input_fusion, ABS_MISC, -4096, 4096, 0, 0);
+
+
+
+        err = input_register_device(sensor->input_fusion);
+        if (err) {
+                pr_err("Failed to register fusion input device\n");
+                input_free_device(sensor->input_fusion);
+                sensor->input_fusion = NULL;
+                goto failed;
+        }
+
+        return 0;
+
+failed:
+        return err;
+
+}
+
 static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 {
-	//struct CWMCU_T mcu;	
+	struct CWMCU_T *mcu;
 	uint32_t max_speed;
 	int cpha, cpol, cs_high = 0;
 	int cs = 0, error = 0, spi_lsb_first = 0;
 
-	(&mcu)->spi = spi;
-
 	spi->bits_per_word = 8;
+
+	mcu = kzalloc(sizeof(struct CWMCU_T), GFP_KERNEL);
+
+	mcu->spi = spi;
+
 	cs = spi->chip_select;
 
 	//judge spidev work mode
@@ -294,24 +579,28 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 				, cs, cpha, cpol, cs_high, max_speed, spi_lsb_first);
 
 
-	 error = create_sysfs_interfaces(&mcu);
-	 if (error) printk("create sysfs error\n");
+	error = create_sysfs_interfaces(mcu);
+	if (error) printk("create sysfs error\n");
 
-	error = cwstm_parse_dt(&spi->dev,&mcu);
+	// create input device node "/dev/input/event*"
+	cywee_acc_input_init(mcu);
+	cywee_gyro_input_init(mcu);
+	cywee_fusion_input_init(mcu);
+
+	error = cwstm_parse_dt(&spi->dev,mcu);
 	if(error < 0)
 	{
 		printk("failed to parse device tree\n");
-		//goto err_parse_dt;
 	}
 
-	gpio_request((&mcu)->irq_gpio, "cwstm,irq-gpio");
+	gpio_request(mcu->irq_gpio, "cwstm,irq-gpio");
 
-	(&mcu)->spi->irq = gpio_to_irq((&mcu)->irq_gpio);
+	mcu->spi->irq = gpio_to_irq(mcu->irq_gpio);
 
-	if ((&mcu)->spi->irq > 0)
+	if (mcu->spi->irq > 0)
 	{
-		error = request_threaded_irq((&mcu)->spi->irq, NULL, CWMCU_interrupt_thread, IRQF_TRIGGER_RISING | IRQF_ONESHOT, "cwmcu", &mcu);
-		if (error < 0) printk("request irq %d failed\n", (&mcu)->spi->irq);
+		error = request_threaded_irq(mcu->spi->irq, NULL, CWMCU_interrupt_thread, IRQF_TRIGGER_RISING | IRQF_ONESHOT, "cwmcu", mcu);
+		if (error < 0) printk("request irq %d failed\n", mcu->spi->irq);
 	}
 
 

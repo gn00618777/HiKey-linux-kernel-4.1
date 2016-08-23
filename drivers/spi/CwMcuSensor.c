@@ -226,14 +226,47 @@ static ssize_t active_set(struct device *dev, struct device_attribute *attr, con
 	
 }
 
+static ssize_t version_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+
+	struct CWMCU_T *sensor = dev_get_drvdata(dev);
+	u8 mcu_addr[1]={0};
+	u8 read_buf[64]={0};
+
+	mcu_addr[0] = 0x01;
+
+	while(1)
+	{
+		CWMCU_SPI_WRITE(sensor->spi, mcu_addr, 1);
+		udelay(100);
+		CWMCU_SPI_READ(sensor->spi, read_buf, 64);
+
+		if(read_buf[0] == 'C' && read_buf[4] == 0x01)
+			break;
+
+		udelay(100);
+	}
+
+	return sprintf(buf, "%c%c%c%c%c%c%c%c%c\n",read_buf[5],read_buf[6],read_buf[7],read_buf[8], read_buf[9], read_buf[10], read_buf[11],read_buf[12],read_buf[13] );
+}
+
+static ssize_t version_set(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+
+	printk("do nothing\n");
+
+	return count;
+}
+
 static struct device_attribute attributes[] = {
         __ATTR(enable, 0660,  active_show, active_set),
+	__ATTR(version, 0660,  version_show, version_set),
 };
 
 static int create_sysfs_interfaces(struct CWMCU_T *mcu_data)
 {
 	int i;
-	int res=0;
+	int res = 0;
 
 	mcu_data->sensor_class = class_create(THIS_MODULE, "cywee_sensorhub");
 	if (IS_ERR(mcu_data->sensor_class)) printk("sensor_class error\n");
@@ -243,8 +276,9 @@ static int create_sysfs_interfaces(struct CWMCU_T *mcu_data)
 		res = PTR_ERR(mcu_data->sensor_dev);
 		printk("sensor_dev error\n");
 	}
-	 //res = dev_set_drvdata(mcu_data->sensor_dev, mcu_data);
-	//if (res) printk("dev_set_drvdata error\n");
+
+	//To other function can access struct struct CWMCU
+	dev_set_drvdata(mcu_data->sensor_dev, mcu_data);
 
 	for (i = 0; i < ARRAY_SIZE(attributes); i++)
 		 if (device_create_file(mcu_data->sensor_dev, attributes + i))
@@ -577,7 +611,6 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 
 	printk("-CWMCU- SPI info: cs [%d] CPHA [%d] CPOL [%d] CS_HIGH [%d], max_speed [%d], spi_lsb_first[%d]\n"
 				, cs, cpha, cpol, cs_high, max_speed, spi_lsb_first);
-
 
 	error = create_sysfs_interfaces(mcu);
 	if (error) printk("create sysfs error\n");

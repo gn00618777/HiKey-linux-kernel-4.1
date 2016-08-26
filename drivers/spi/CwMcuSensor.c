@@ -73,7 +73,7 @@ struct CWMCU_T {
 	int cal_cmd;
 	int cal_type;
 	int cal_id;
-	
+
 	/* gpio define */
 	int irq_gpio;
 	int wakeup_gpio;
@@ -110,7 +110,7 @@ struct CWMCU_T {
 	/* int supend_flag; */
 
     int wq_polling_time;
-	
+
 	/* mutex lock */
 #ifdef CWMCU_MUTEX
 	struct mutex mutex_lock;
@@ -134,7 +134,7 @@ struct CWMCU_T {
 	uint8_t voice_mode;
 	uint8_t voice_command;
 	uint32_t voice_package;
-	
+
 	/* voice trigger to search */
 	uint16_t voice_data_length;
 	uint8_t voice_stop_streaming;
@@ -154,7 +154,7 @@ static int CWMCU_SPI_READ(struct spi_device *spidevice, u8 *data, u8 len)
 	t.tx_buf = 0;
 	t.rx_buf = data;
 	t.len = len;
-	
+
 	//if bits_per_word and speed_hz are 0, then default is used from spi device
 	//t.bits_per_word = 8;
 	//t.speed_hz = (&mcu)->spi->max_speed_hz;
@@ -182,7 +182,7 @@ static int cwstm_parse_dt(struct device *dev, struct CWMCU_T *sensor)
 
 err:
 	return ret;
-	
+
 }
 
 static int CWMCU_SPI_WRITE(struct spi_device *spidevice, u8 *data, u8 len)
@@ -195,7 +195,7 @@ static int CWMCU_SPI_WRITE(struct spi_device *spidevice, u8 *data, u8 len)
 
 	memset(&t, 0, sizeof(t));
 
-	t.rx_buf = 0;	
+	t.rx_buf = 0;
 	t.tx_buf = data;
 	t.len = len;
 
@@ -219,11 +219,11 @@ static ssize_t active_show(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t active_set(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	
+
 	printk("do nothing");
 
 	return count;
-	
+
 }
 
 static ssize_t version_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -603,7 +603,7 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 	//judge spidev work mode
 	cpha = (spi->mode & SPI_CPHA) ? 1:0;
 	cpol = (spi->mode & SPI_CPOL) ? 1:0;
-	
+
 	//judge spidev's cs is low or high active  low:0 high:1
 	cs_high = (spi->mode & SPI_CS_HIGH) ? 1:0;
 	spi_lsb_first = (spi->mode & SPI_LSB_FIRST ) ? 1:0;

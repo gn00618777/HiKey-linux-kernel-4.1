@@ -159,7 +159,7 @@ enum VOCIE_RECOGNITION_MODE{
 /*
     CALIB_EN:
         cmd/id/type/
-    
+
     CALIB_CHECK_STATUS:
     CALIB_DATA_WRITE:
     CALIB_DATA_READ:
@@ -182,8 +182,8 @@ enum VOCIE_RECOGNITION_MODE{
                data format:
                [0] i2c error code
                [1:4] (int)X bias
-               [5:8] (int)Y bias 
-               [9:12] (int)Z bias 
+               [5:8] (int)Y bias
+               [9:12] (int)Z bias
 
         If Mcu reset or system reboot: need reload calibrator data to MCU
             echo CALIB_DATA_WRITE/(ACCELERATION or GYRO) > calibrator_cmd
@@ -191,8 +191,8 @@ enum VOCIE_RECOGNITION_MODE{
                data format:
                [0:3] (int)X bias
                [4:7] (int)Y bias
-               [8:11] (int)Z bias 
-               
+               [8:11] (int)Z bias
+
     Mag flow:
         When system boot up or MCU reset, reload data to MCU
             echo CALIB_DATA_WRITE/MAGNETIC > calibrator_cmd
@@ -206,7 +206,7 @@ enum VOCIE_RECOGNITION_MODE{
                data format:
                [0] i2c error code
                [1:30] mag private data
-        
+
     Proximity flow:
         echo CALIB_EN/PROXIMITY/CALIB_TYPE_SENSORS_ENABLE > calibrator_cmd
         echo CALIB_DATA_READ/PROXIMITY > calibrator_cmd
@@ -215,16 +215,16 @@ enum VOCIE_RECOGNITION_MODE{
                data format:
                [0] i2c error code
                [1:4]light bias(not use)
-               [5:8](int) is Hight threshold to check sensors is near 
-               [9:12](int) is low threshold to check sensors is far 
+               [5:8](int) is Hight threshold to check sensors is near
+               [9:12](int) is low threshold to check sensors is far
                [13:16](int) Sensors current raw data
         if calibrator successful:
         echo CALIB_DATA_WRITE/PROXIMITY > calibrator_cmd
         echo [0:29] > calibrator_data
            data format:
            [0:3]light bias(not use)
-           [4:7](int) is Hight threshold to check sensors is near 
-           [8:11](int) is low threshold to check sensors is far 
+           [4:7](int) is Hight threshold to check sensors is near
+           [8:11](int) is low threshold to check sensors is far
         disable sensors
         echo CALIB_EN/PROXIMITY/CALIB_TYPE_SENSORS_DISABLE > calibrator_cmd
 */
@@ -332,7 +332,7 @@ typedef enum {
 	RegMapR_StreamEvent=0x21,
 	RegMapR_BatchCount=0x22,
 	RegMapR_BatchEvent=0x23,
-	
+
 	/**
 	*	1byte
 	*	count
@@ -344,7 +344,7 @@ typedef enum {
 	*/
     RegMapR_GestureCount                     = 0x24,
     RegMapR_GestureEvent                     = 0x25,
-	
+
 	/**
 	*	2byte
 	*	count
@@ -354,7 +354,7 @@ typedef enum {
 	*/
 	RegMapR_SystemInfoMsgCount			= 0x26,
 	RegMapR_SystemInfoMsgEvent			= 0x27,
-    
+
     /**
     *   Warming message
     *   2byte
@@ -365,7 +365,7 @@ typedef enum {
     */
     RegMapR_WarningMsgCount                   = 0x28,
     RegMapR_WarningMsgEvent                   = 0x29,
-    
+
     /**
     *   Log message
     *   2byte
@@ -390,7 +390,7 @@ typedef enum {
 	*/
 	RegMapW_CalibratorCmd			= 0x40,
 	RegMapW_CalibratorData				= 0x41,
-	
+
 	RegMapR_CalibratorData 	=0x43,
 
 	/**
@@ -408,7 +408,7 @@ typedef enum {
     */
     RegMapW_SetSystemMsg                      = 0x5C,
     RegMapR_GetSystemMsg                      = 0x5D,
-	
+
     RegMapR_GetAccelerationRawData            = 0x60,
     RegMapR_GetMagneticRawData                = 0x61,
     RegMapR_GetGyroRawData                    = 0x62,
@@ -428,14 +428,14 @@ typedef enum {
 	*	data
 	*/
 	RegMapR_GetProjectID						= 0x82,
-	/*Project ID for function available check*/	
+	/*Project ID for function available check*/
 	RegMapR_GetCountOfRegID						= 0x83,
 	RegMapR_GetReadRegTableSetting				    = 0x84,
 	RegMapR_GetWriteRegTableSetting			    = 0x85,
 	RegMapW_SetUARTDebugList			    = 0x86,
     RegMapR_GetLibVersion                     = 0x87,
 
-    /* voice recognition */	
+    /* voice recognition */
 	RegMapW_VoiceRecoStart                    = 0x90,
     RegMapW_VoiceRecoStop                     = 0x91,
     RegMapW_VoiceRecoStopStreaming            = 0x92,
@@ -446,8 +446,8 @@ typedef enum {
     RegMapR_VoiceRecoGetNextData              = 0x97,
     RegMapR_VoiceRecoCheckFlashMemValidity    = 0x98,
     RegMapR_VoiceRecoDetectionReport          = 0x99,
-    RegMapR_VoiceRecoGetCommandStatus         = 0x9A,	
-	
+    RegMapR_VoiceRecoGetCommandStatus         = 0x9A,
+
 	RegMapR_VoiceReadParameterPayload         = 0x9B,
 	RegMapW_VoiceWriteParameterPayload        = 0x9C,
 

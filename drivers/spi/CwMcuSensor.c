@@ -610,6 +610,51 @@ failed:
 
 }
 
+static int cywee_mag_input_init(struct CWMCU_T *sensor)
+{
+        int err = 0;
+
+        sensor->input_mag = input_allocate_device();
+        if (!sensor->input_mag) {
+                printk(KERN_ERR "Failed to allocate mag input device\n");
+                err = -ENOMEM;
+                goto failed;
+        }
+
+        sensor->input_mag->name = MAG_NAME;
+        set_bit(EV_ABS, sensor->input_mag->evbit);
+
+        input_set_abs_params(sensor->input_mag, ABS_X, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_Y, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_Z, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_RX, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_RY, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_RZ, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_THROTTLE, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_RUDDER, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_WHEEL, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_HAT0X, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_HAT1X, MAG_MIN, MAG_MAX, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_HAT2X, MAG_MIN, MAG_MAX, 0, 0);
+
+        input_set_abs_params(sensor->input_mag, ABS_BRAKE, 0, 5, 0, 0);
+        input_set_abs_params(sensor->input_mag, ABS_MISC, 0, 5, 0, 0);
+
+        err = input_register_device(sensor->input_mag);
+        if (err) {
+                pr_err("Failed to register mag input device\n");
+                input_free_device(sensor->input_mag);
+                sensor->input_mag = NULL;
+                goto failed;
+        }
+
+        return 0;
+
+failed:
+        return err;
+}
+
+
 static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 {
 	struct CWMCU_T *mcu;
@@ -644,6 +689,7 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 	cywee_acc_input_init(mcu);
 	cywee_gyro_input_init(mcu);
 	cywee_fusion_input_init(mcu);
+	cywee_mag_input_init(mcu);
 
 	error = cwstm_parse_dt(&spi->dev,mcu);
 	if(error < 0)

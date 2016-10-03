@@ -323,6 +323,49 @@ static void report_acc_values(u8 *read_buf, struct CWMCU_T *mcu)
 
 }
 
+static void report_mag_values(u8 *read_buf, struct CWMCU_T *mcu)
+{
+	int reset_value = 0xFFFF0000;
+
+	// Report Magnetic X of four bytes
+	input_report_abs(mcu->input_mag, ABS_X, (int)(read_buf[32]));
+        input_report_abs(mcu->input_mag, ABS_Y, (int)(read_buf[31]));
+        input_report_abs(mcu->input_mag, ABS_Z, (int)(read_buf[30]));
+	input_report_abs(mcu->input_mag, ABS_MISC, (int)(read_buf[29]));
+
+	// Report Magnetic Y of four bytes
+	input_report_abs(mcu->input_mag, ABS_RX, (int)(read_buf[36]));
+	input_report_abs(mcu->input_mag, ABS_RY, (int)(read_buf[35]));
+	input_report_abs(mcu->input_mag, ABS_RZ, (int)(read_buf[34]));
+	input_report_abs(mcu->input_mag, ABS_THROTTLE, (int)(read_buf[33]));
+
+	// Report Magnetic Z of four bytes
+	input_report_abs(mcu->input_mag, ABS_RUDDER, (int)(read_buf[40]));
+	input_report_abs(mcu->input_mag, ABS_WHEEL, (int)(read_buf[39]));
+	input_report_abs(mcu->input_mag, ABS_HAT0X, (int)(read_buf[38]));
+	input_report_abs(mcu->input_mag, ABS_HAT1X, (int)(read_buf[37]));
+
+	// Report Magnetic Accuracy of one byte
+	input_report_abs(mcu->input_mag, ABS_HAT2X, (int)(read_buf[41]));
+	input_sync(mcu->input_mag);
+
+	input_report_abs(mcu->input_mag, ABS_X, reset_value);
+	input_report_abs(mcu->input_mag, ABS_Y, reset_value);
+	input_report_abs(mcu->input_mag, ABS_Z, reset_value);
+	input_report_abs(mcu->input_mag, ABS_MISC, reset_value);
+	input_report_abs(mcu->input_mag, ABS_RX, reset_value);
+        input_report_abs(mcu->input_mag, ABS_RY, reset_value);
+        input_report_abs(mcu->input_mag, ABS_RZ, reset_value);
+        input_report_abs(mcu->input_mag, ABS_THROTTLE, reset_value);
+	input_report_abs(mcu->input_mag, ABS_RUDDER, reset_value);
+        input_report_abs(mcu->input_mag, ABS_WHEEL, reset_value);
+        input_report_abs(mcu->input_mag, ABS_HAT0X, reset_value);
+        input_report_abs(mcu->input_mag, ABS_HAT1X, reset_value);
+	input_report_abs(mcu->input_mag, ABS_HAT2X, reset_value);
+	input_sync(mcu->input_mag);
+
+}
+
 static void report_gyro_values(u8 *read_buf, struct CWMCU_T *mcu)
 {
 	int reset_value = 0xFFFF0000;
@@ -441,6 +484,7 @@ static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
 	if( (checksum == read_buf[63]) && (read_buf[0] == 'C') )
 	{
 		report_acc_values(read_buf, sensor);
+		report_mag_values(read_buf, sensor);
 		report_gyro_values(read_buf, sensor);
 		report_fusion_values(read_buf, sensor);
 	}

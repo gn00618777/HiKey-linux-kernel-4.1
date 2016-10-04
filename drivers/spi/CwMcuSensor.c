@@ -407,24 +407,6 @@ static void report_fusion_values(u8 *read_buf, struct CWMCU_T *mcu)
 	int reset_value = 0xFFFF0000;
 	int temp = 0, temp_x = 0, temp_y = 0, temp_z = 0, temp_rx = 0, temp_ry = 0, temp_rz = 0;
 
-	temp = (read_buf[32] << 8) | (read_buf[31]);
-	temp = (temp << 8) | ( read_buf[30]);
-	temp = (temp << 8) | ( read_buf[29]);
-	temp_x = temp;
-	temp = 0;
-
-	temp = (read_buf[36] << 8) | (read_buf[35]);
-	temp = (temp << 8) | (read_buf[34]);
-	temp = (temp << 8) | (read_buf[33]);
-	temp_y = temp;
-	temp = 0;
-
-	temp = (read_buf[40] << 8) | (read_buf[39]);
-	temp = (temp << 8) | (read_buf[38]);
-	temp = (temp << 8) | (read_buf[37]);
-	temp_z = temp;
-	temp = 0;
-
 	//For RotationVector X
         temp = ( read_buf[44] << 8 ) | ( read_buf[43] );
         temp = ( temp << 8 ) | ( read_buf[42] );
@@ -444,19 +426,13 @@ static void report_fusion_values(u8 *read_buf, struct CWMCU_T *mcu)
         temp_rz = temp;
 	temp = 0;
 
-	input_report_abs(mcu->input_fusion, ABS_X, temp_x);
-	input_report_abs(mcu->input_fusion, ABS_Y, temp_y);
-	input_report_abs(mcu->input_fusion, ABS_Z, temp_z);
 	input_report_abs(mcu->input_fusion, ABS_RX, temp_rx);
 	input_report_abs(mcu->input_fusion, ABS_RY, temp_ry);
 	input_report_abs(mcu->input_fusion, ABS_RZ, temp_rz);
 	input_sync(mcu->input_fusion);
 
-	input_report_abs(mcu->input_fusion, ABS_X, reset_value);
-        input_report_abs(mcu->input_fusion, ABS_Y, reset_value);
-        input_report_abs(mcu->input_fusion, ABS_Z, reset_value);
 	input_report_abs(mcu->input_fusion, ABS_RX, reset_value);
-        input_report_abs(mcu->input_fusion, ABS_RY, reset_value);
+	input_report_abs(mcu->input_fusion, ABS_RY, reset_value);
         input_report_abs(mcu->input_fusion, ABS_RZ, reset_value);
         input_sync(mcu->input_fusion);
 

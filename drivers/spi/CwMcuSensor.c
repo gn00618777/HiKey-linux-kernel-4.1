@@ -25,6 +25,8 @@
 #define QueueSystemInfoMsgSize		30
 #define QueueWarningMsgSize		30
 
+#define CWMCU_MUTEX
+
 struct CWMCU_T {
 
 	/* Input device */
@@ -245,24 +247,41 @@ static ssize_t version_show(struct device *dev, struct device_attribute *attr, c
 {
 
 	struct CWMCU_T *sensor = dev_get_drvdata(dev);
-	u8 mcu_addr[1]={0};
+	u8 tx_addr[9]={0};
 	u8 read_buf[64]={0};
+	u8 error_buf[5]={'e','r','r','o','r'};
+	u8 checksum = 0;
+	int i = 0;
 
-	mcu_addr[0] = 0x01;
+	tx_addr[0] = 0x0a;
+	tx_addr[1] = 0x40;
+	tx_addr[2] = 0x00;
+	tx_addr[3] = 0x02;
+	tx_addr[4] = 0x00;
+	tx_addr[5] = 0x00;
+	tx_addr[6] = 0x00;
+	tx_addr[7] = 0x00;
+	tx_addr[8] = 0x00;
 
-	while(1)
+#ifdef CWMCU_MUTEX
+       mutex_lock(&sensor->mutex_lock);
+#endif
+
+	CWMCU_SPI_COMMAND(sensor->spi, tx_addr, read_buf, 9, 64);
+
+#ifdef CWMCU_MUTEX
+       mutex_unlock(&sensor->mutex_lock);
+#endif
+
+	for(i = 0; i < 63 ; i++)
+		checksum = checksum + read_buf[i];
+
+	if( (checksum == read_buf[63]) && read_buf[0] == 'C')
 	{
-		//CWMCU_SPI_COMMAND(sensor->spi, mcu_addr, 1);
-		udelay(100);
-		CWMCU_SPI_READ(sensor->spi, read_buf, 64);
+		return sprintf(buf, "%c%c%c%c%c%c%c%c%c%c%c\n",read_buf[3],read_buf[4],read_buf[5],read_buf[6], read_buf[7], read_buf[8], read_buf[9],read_buf[10], read_buf[11],read_buf[12],read_buf[13]);
+        }else
+		return sprintf(buf, "%c%c%c%c%c\n",error_buf[0], error_buf[1], error_buf[2], error_buf[3], error_buf[4]);
 
-		if(read_buf[0] == 'C' && read_buf[4] == 0x01)
-			break;
-
-		udelay(100);
-	}
-
-	return sprintf(buf, "%c%c%c%c%c%c%c%c%c\n",read_buf[5],read_buf[6],read_buf[7],read_buf[8], read_buf[9], read_buf[10], read_buf[11],read_buf[12],read_buf[13] );
 }
 
 static ssize_t version_set(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
@@ -429,7 +448,14 @@ static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
 	tx_addr[7] = 0x00;
 	tx_addr[8] = 0x00;
 
+#ifdef CWMCU_MUTEX
+       mutex_lock(&sensor->mutex_lock);
+#endif
 	CWMCU_SPI_COMMAND(sensor->spi, tx_addr, read_buf, 9, 64);
+
+#ifdef CWMCU_MUTEX
+       mutex_unlock(&sensor->mutex_lock);
+#endif
 
 	// calculate CRC checksum
 	for(i=0; i<63 ; i++)
@@ -657,6 +683,9 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 	gpio_request(mcu->debug_gpio, "cwstm,debug-gpio");
 	gpio_direction_output(mcu->debug_gpio, 0);
 
+#ifdef CWMCU_MUTEX
+        mutex_init(&mcu->mutex_lock);
+#endif
 
 	if (mcu->spi->irq > 0)
 	{

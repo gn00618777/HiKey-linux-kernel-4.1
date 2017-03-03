@@ -80,6 +80,7 @@ struct CWMCU_T {
 	int cs_gpio;
 	int boot_gpio;
 	int reset_gpio;
+	int debug_gpio;
 
 	/* debug flag */
 	uint32_t debug_log;
@@ -179,6 +180,14 @@ static int cwstm_parse_dt(struct device *dev, struct CWMCU_T *sensor)
 		goto err;
 	}
 	sensor->irq_gpio = ret;
+
+	ret = of_get_named_gpio(np, "cwstm,debug-gpio",0);
+	if(ret < 0)
+	{
+		printk("failed to get \"cwstm,debug-gpio\"\n");
+		goto err;
+	}
+	sensor->debug_gpio = ret;
 
 err:
 	return ret;
@@ -431,8 +440,10 @@ static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
 		report_acc_values(read_buf, sensor);
 		report_gyro_values(read_buf, sensor);
 		report_fusion_values(read_buf, sensor);
+	}else {
+		gpio_set_value(sensor->debug_gpio,1);
+		gpio_set_value(sensor->debug_gpio,0);
 	}
-
 
 	return IRQ_HANDLED;
 
@@ -642,6 +653,10 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 	gpio_request(mcu->irq_gpio, "cwstm,irq-gpio");
 
 	mcu->spi->irq = gpio_to_irq(mcu->irq_gpio);
+
+	gpio_request(mcu->debug_gpio, "cwstm,debug-gpio");
+	gpio_direction_output(mcu->debug_gpio, 0);
+
 
 	if (mcu->spi->irq > 0)
 	{

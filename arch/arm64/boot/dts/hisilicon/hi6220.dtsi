@@ -740,6 +740,7 @@
 			spi-cpha;
 
 			cwstm,irq-gpio = <&gpio2 0 0>;
+			cwstm,debug-gpio = <&gpio2 1 0>;
 			};
 
 		};

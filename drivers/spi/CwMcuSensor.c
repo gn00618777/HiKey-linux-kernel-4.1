@@ -185,25 +185,31 @@ err:
 
 }
 
-static int CWMCU_SPI_WRITE(struct spi_device *spidevice, u8 *data, u8 len)
+static int CWMCU_SPI_COMMAND(struct spi_device *spidevice, u8 *txData, u8 *rxData, unsigned txLen, unsigned rxLen)
 {
 	struct spi_message m;
-	struct spi_transfer t;
+	struct spi_transfer t[2];
 	int rc = 0;
 
 	spi_message_init(&m);
 
-	memset(&t, 0, sizeof(t));
+	memset(&t[0], 0, sizeof(t));
 
-	t.rx_buf = 0;
-	t.tx_buf = data;
-	t.len = len;
+	t[0].rx_buf = 0;
+	t[0].tx_buf = txData;
+	t[0].len = txLen;
 
 	//if bits_per_word and speed_hz are 0, then default is used from spi device
         /*t.bits_per_word = 8;
         t.speed_hz = sensor->spi->max_speed_hz;*/
 
-	spi_message_add_tail(&t, &m);
+	spi_message_add_tail(&t[0], &m);
+
+	t[1].rx_buf = rxData;
+	t[1].tx_buf = 0;
+	t[1].len = rxLen;
+
+	spi_message_add_tail(&t[1], &m);
 
 	rc = spi_sync(spidevice, &m);
 	if(rc < 0) printk("spi sync error rc : %d\n", rc);
@@ -237,7 +243,7 @@ static ssize_t version_show(struct device *dev, struct device_attribute *attr, c
 
 	while(1)
 	{
-		CWMCU_SPI_WRITE(sensor->spi, mcu_addr, 1);
+		//CWMCU_SPI_COMMAND(sensor->spi, mcu_addr, 1);
 		udelay(100);
 		CWMCU_SPI_READ(sensor->spi, read_buf, 64);
 
@@ -399,15 +405,22 @@ static void report_fusion_values(u8 *read_buf, struct CWMCU_T *mcu)
 static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
 {
 	struct CWMCU_T *sensor = data;
-	u8 tx_addr[1]={0};
+	u8 tx_addr[9]={0};
 	u8 read_buf[64]={0};
 	u8 checksum = 0;
 	int i = 0;
-	tx_addr[0] = 0x03;
 
-	CWMCU_SPI_WRITE(sensor->spi, tx_addr, 1);
-	udelay(100);
-	CWMCU_SPI_READ(sensor->spi, read_buf, 64);
+	tx_addr[0] = 0x0a;
+	tx_addr[1] = 0x40;
+	tx_addr[2] = 0x00;
+	tx_addr[3] = 0x02;
+	tx_addr[4] = 0x80;
+	tx_addr[5] = 0x00;
+	tx_addr[6] = 0x00;
+	tx_addr[7] = 0x00;
+	tx_addr[8] = 0x00;
+
+	CWMCU_SPI_COMMAND(sensor->spi, tx_addr, read_buf, 9, 64);
 
 	// calculate CRC checksum
 	for(i=0; i<63 ; i++)

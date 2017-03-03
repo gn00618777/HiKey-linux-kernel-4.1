@@ -298,21 +298,21 @@ static void report_acc_values(u8 *read_buf, struct CWMCU_T *mcu)
 	int reset_value = 0xFFFF0000;
 	int temp = 0, temp_x=0, temp_y=0, temp_z=0;
 
-	temp = (read_buf[8] << 8) | (read_buf[7]);
-	temp = (temp << 8) | ( read_buf[6]);
-	temp = (temp << 8) | ( read_buf[5]);
+	temp = (read_buf[6] << 8) | (read_buf[5]);
+	temp = (temp << 8) | ( read_buf[4]);
+	temp = (temp << 8) | ( read_buf[3]);
 	temp_x = temp;
 	temp = 0;
 
-	temp = (read_buf[12] << 8) | (read_buf[11]);
-	temp = (temp << 8) | (read_buf[10]);
-        temp = (temp << 8) | (read_buf[9]);
+	temp = (read_buf[10] << 8) | (read_buf[9]);
+	temp = (temp << 8) | (read_buf[8]);
+        temp = (temp << 8) | (read_buf[7]);
 	temp_y = temp;
 	temp = 0;
 
-	temp = (read_buf[16] << 8) | (read_buf[15]);
-        temp = (temp << 8) | (read_buf[14]);
-        temp = (temp << 8) | (read_buf[13]);
+	temp = (read_buf[14] << 8) | (read_buf[13]);
+        temp = (temp << 8) | (read_buf[12]);
+        temp = (temp << 8) | (read_buf[11]);
         temp_z= temp;
         temp = 0;
 
@@ -334,21 +334,21 @@ static void report_gyro_values(u8 *read_buf, struct CWMCU_T *mcu)
 	int reset_value = 0xFFFF0000;
         int temp = 0, temp_x=0, temp_y=0, temp_z=0;
 
-	temp = (read_buf[20] << 8) | (read_buf[19]);
-        temp = (temp << 8) | ( read_buf[18]);
-        temp = (temp << 8) | ( read_buf[17]);
+	temp = (read_buf[18] << 8) | (read_buf[17]);
+        temp = (temp << 8) | ( read_buf[16]);
+        temp = (temp << 8) | ( read_buf[15]);
         temp_x = temp;
         temp = 0;
 
-        temp = (read_buf[24] << 8) | (read_buf[23]);
-        temp = (temp << 8) | (read_buf[22]);
-        temp = (temp << 8) | (read_buf[21]);
+        temp = (read_buf[22] << 8) | (read_buf[21]);
+        temp = (temp << 8) | (read_buf[20]);
+        temp = (temp << 8) | (read_buf[19]);
         temp_y = temp;
         temp = 0;
 
-        temp = (read_buf[28] << 8) | (read_buf[27]);
-        temp = (temp << 8) | (read_buf[26]);
-        temp = (temp << 8) | (read_buf[25]);
+        temp = (read_buf[26] << 8) | (read_buf[25]);
+        temp = (temp << 8) | (read_buf[24]);
+        temp = (temp << 8) | (read_buf[23]);
         temp_z = temp;
         temp = 0;
 
@@ -370,21 +370,21 @@ static void report_fusion_values(u8 *read_buf, struct CWMCU_T *mcu)
 	int reset_value = 0xFFFF0000;
 	int temp = 0, temp_x = 0, temp_y = 0, temp_z = 0;
 
-	temp = (read_buf[32] << 8) | (read_buf[31]);
-	temp = (temp << 8) | ( read_buf[30]);
-	temp = (temp << 8) | ( read_buf[29]);
+	temp = (read_buf[43] << 8) | (read_buf[42]);
+	temp = (temp << 8) | ( read_buf[41]);
+	temp = (temp << 8) | ( read_buf[40]);
 	temp_x = temp;
 	temp = 0;
 
-	temp = (read_buf[36] << 8) | (read_buf[35]);
-	temp = (temp << 8) | (read_buf[34]);
-	temp = (temp << 8) | (read_buf[33]);
+	temp = (read_buf[47] << 8) | (read_buf[46]);
+	temp = (temp << 8) | (read_buf[45]);
+	temp = (temp << 8) | (read_buf[44]);
 	temp_y = temp;
 	temp = 0;
 
-	temp = (read_buf[40] << 8) | (read_buf[39]);
-	temp = (temp << 8) | (read_buf[38]);
-	temp = (temp << 8) | (read_buf[37]);
+	temp = (read_buf[51] << 8) | (read_buf[50]);
+	temp = (temp << 8) | (read_buf[49]);
+	temp = (temp << 8) | (read_buf[48]);
 	temp_z = temp;
 	temp = 0;
 

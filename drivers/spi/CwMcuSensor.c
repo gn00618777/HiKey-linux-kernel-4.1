@@ -405,35 +405,43 @@ static void report_fusion_values(u8 *read_buf, struct CWMCU_T *mcu)
 {
 
 	int reset_value = 0xFFFF0000;
-	int temp = 0, temp_x = 0, temp_y = 0, temp_z = 0, temp_rx = 0, temp_ry = 0, temp_rz = 0;
+	int temp = 0, temp_x = 0, temp_y = 0, temp_z = 0, temp_w = 0;
 
 	//For RotationVector X
-        temp = ( read_buf[44] << 8 ) | ( read_buf[43] );
-        temp = ( temp << 8 ) | ( read_buf[42] );
-        temp = ( temp << 8 ) | ( read_buf[41]);
-        temp_rx = temp;
+        temp = ( read_buf[45] << 8 ) | ( read_buf[44] );
+        temp = ( temp << 8 ) | ( read_buf[43] );
+        temp = ( temp << 8 ) | ( read_buf[42]);
+        temp_x = temp;
 	temp = 0;
         //For RotationVector Y
-        temp = ( read_buf[48] << 8 ) | ( read_buf[47] );
-        temp = ( temp << 8 ) | ( read_buf[46] );
-        temp = ( temp << 8 ) | ( read_buf[45]);
-        temp_ry = temp;
+        temp = ( read_buf[49] << 8 ) | ( read_buf[46] );
+        temp = ( temp << 8 ) | ( read_buf[45] );
+        temp = ( temp << 8 ) | ( read_buf[44]);
+        temp_y = temp;
         temp = 0;
         //For RotationVector Z
-        temp = ( read_buf[52] << 8 ) | ( read_buf[51] );
-        temp = ( temp << 8 ) | ( read_buf[50] );
-        temp = ( temp << 8 ) | ( read_buf[49]);
-        temp_rz = temp;
+        temp = ( read_buf[53] << 8 ) | ( read_buf[52] );
+        temp = ( temp << 8 ) | ( read_buf[51] );
+        temp = ( temp << 8 ) | ( read_buf[50]);
+        temp_z = temp;
 	temp = 0;
+	//For RotationVector W
+	temp = (read_buf[57] << 8) | read_buf[56];
+        temp = ( temp << 8 ) | read_buf[55];
+        temp = ( temp << 8 ) | read_buf[54];
+        temp_w = temp;
+        temp = 0;
 
-	input_report_abs(mcu->input_fusion, ABS_RX, temp_rx);
-	input_report_abs(mcu->input_fusion, ABS_RY, temp_ry);
-	input_report_abs(mcu->input_fusion, ABS_RZ, temp_rz);
+	input_report_abs(mcu->input_fusion, ABS_X, temp_x);
+	input_report_abs(mcu->input_fusion, ABS_Y, temp_y);
+	input_report_abs(mcu->input_fusion, ABS_Z, temp_z);
+	input_report_abs(mcu->input_fusion, ABS_MISC, temp_w);
 	input_sync(mcu->input_fusion);
 
-	input_report_abs(mcu->input_fusion, ABS_RX, reset_value);
-	input_report_abs(mcu->input_fusion, ABS_RY, reset_value);
-        input_report_abs(mcu->input_fusion, ABS_RZ, reset_value);
+	input_report_abs(mcu->input_fusion, ABS_X, reset_value);
+	input_report_abs(mcu->input_fusion, ABS_Y, reset_value);
+        input_report_abs(mcu->input_fusion, ABS_Z, reset_value);
+	input_report_abs(mcu->input_fusion, ABS_MISC, reset_value);
         input_sync(mcu->input_fusion);
 
 }

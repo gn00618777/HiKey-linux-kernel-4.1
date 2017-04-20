@@ -30,7 +30,7 @@ struct CWMCU_T {
 	/* Input device */
 	struct input_dev *input_acc;
         struct input_dev *input_gyro;
-        struct input_dev *input_mag;
+        //struct input_dev *input_mag;
 	struct input_dev *input_fusion;
 
 	struct platform_device *virmouse_dev;
@@ -323,7 +323,7 @@ static void report_acc_values(u8 *read_buf, struct CWMCU_T *mcu)
 
 }
 
-static void report_mag_values(u8 *read_buf, struct CWMCU_T *mcu)
+/*static void report_mag_values(u8 *read_buf, struct CWMCU_T *mcu)
 {
 	int reset_value = 0xFFFF0000;
 
@@ -364,7 +364,7 @@ static void report_mag_values(u8 *read_buf, struct CWMCU_T *mcu)
 	input_report_abs(mcu->input_mag, ABS_HAT2X, reset_value);
 	input_sync(mcu->input_mag);
 
-}
+}*/
 
 static void report_gyro_values(u8 *read_buf, struct CWMCU_T *mcu)
 {
@@ -468,7 +468,7 @@ static irqreturn_t CWMCU_interrupt_thread(int irq, void *data)
 	if( (checksum == read_buf[63]) && (read_buf[0] == 'C') )
 	{
 		report_acc_values(read_buf, sensor);
-		report_mag_values(read_buf, sensor);
+		//report_mag_values(read_buf, sensor);
 		report_gyro_values(read_buf, sensor);
 		report_fusion_values(read_buf, sensor);
 	}
@@ -638,7 +638,7 @@ failed:
 
 }
 
-static int cywee_mag_input_init(struct CWMCU_T *sensor)
+/*static int cywee_mag_input_init(struct CWMCU_T *sensor)
 {
         int err = 0;
 
@@ -680,7 +680,7 @@ static int cywee_mag_input_init(struct CWMCU_T *sensor)
 
 failed:
         return err;
-}
+}*/
 
 
 static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
@@ -717,7 +717,7 @@ static int /*__devinit*/ CWMCU_spi_probe(struct spi_device *spi)
 	cywee_acc_input_init(mcu);
 	cywee_gyro_input_init(mcu);
 	cywee_fusion_input_init(mcu);
-	cywee_mag_input_init(mcu);
+	//cywee_mag_input_init(mcu);
 
 	error = cwstm_parse_dt(&spi->dev,mcu);
 	if(error < 0)
